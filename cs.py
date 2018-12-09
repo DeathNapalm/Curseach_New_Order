@@ -24,24 +24,27 @@ Tбуф – среднее время нахождения программы в
 распределенные по экспоненциальному закону с частотой λ=2 1/сек,
 а среднее время обработки программы каждым сервером составляет tобр= 3 сек (закон распределения -экспоненциальный)."""
 
-#абсолютная вероятность - относительную умножить на лямбда
+# абсолютная вероятность - относительную умножить на лямбда
+from pprint import pprint as pp
+
 from random import expovariate, uniform
-# lambd_a = 1/2
-# delta_time = 1/3
-class Server():
+
+
+class Server:
     """сервер представляет из себя структуру, которая приниманет время паявления программы и создает таймлайн
     , в котором отображены все события связанные с исполнением этих программ"""
     def __init__(self):
         self.programm_number = 1
-        global time
-        time = 0
-        self.log = []
+        server_time = 0
         self.isworking = False
-        self.buffer = 0
+        self.buffer = []
         self.programstart = 0
-        self.programend = 0
-        self.statystics = {'P0': 0, 'P1': 0, 'P2' : 0, 'P3': 0, 'P4': 0, 'Q': 0,  'S': 0,'Potk': 0,
-                           'Nprog': 0, 'Tprog': 0, 'Nbuf': 0, 'Tbuf':0}
+        self.program_end = 0
+        self.program = 0
+        self.statystics = {'P0': [0, 0], 'P1': [0, 0], 'P2': [0, 0], 'P3': [0, 0], 'P4': [0, 0], 'Potk': 0,
+                           'Q': 0,  'S': 0,
+                           'Nprog': 0, 'Tprog': 0,
+                           'Nbuf': 0, 'Tbuf': 0}
 
     def take_program(self, program_itself):
         """
@@ -50,40 +53,87 @@ class Server():
         если сервер занят то отправляет программу в буфер
         если в буфере больше 3х программ то программа покидает сервер необработанной
         """
+
+        # сервер простаивает до появления нулевой программы
+        if not self.statystics['Q']:
+            self.statystics['P0'][0] = program_itself.appear_time
+            program_itself.cs_enter = program_itself.appear_time
+
         self.statystics['Q'] += 1
-        #TODO добавить вариант простоя сервера
-        #time = time + program_appear_time
         if self.isworking:
-            if program_itself.appear_time > self.programmend:
+            if program_itself.appear_time >= self.program_end:
+                self.program.cs_exit = self.program_end
                 self.close_program()
-                self.debuffer_program()
-            self.buffer_programm(program_itself)
+                self.isworking = False
+                if len(self.buffer):
+                    self.debuffer_program()
+                else:
+                    # простой сервера
+                    pass
+            self.buffer_program(program_itself)
         else:
+            self.statystics['P1'][0] += program_itself.appear_time - self.statystics['P0'][1]
             self.isworking = True
+            self.program = program_itself
             self.programstart = program_itself.appear_time
-            self.progrmand  = program_itself.process_time#+ generate_process_time
-            #self.log.append((time,))
+            self.program_end = program_itself.appear_time + program_itself.process_time
+            # self.log.append((time,))
 
-
-
-    def buffer_programm(self,  program):
-        if len(self.buffer)>=3:
-            self.log.append((time,'програма покинула сервер необработанной'))
-            self.statystics['Potk']+=1
+    def buffer_program(self,  program):
+        """Кладет программу в буффер, если буффер переполнен, программа выбрасывается"""
+        if len(self.buffer) >= 3:
+            self.statystics['Potk'] += 1
+            program.cs_exit = program.appear_time
+            self.throw_program(program)
         else:
-            self.buffer+=1
-            self.log.append((time,'в буфере теперь {} программ'.format(self.buffer)))
+            self.buffer.append(program)
+            program.buffer_enter = program.appear_time
 
     def debuffer_program(self):
         """Убирает программу из буфера, уменьшает буфер на 1 записывает в статистику
-            когда из буфера была убрана программа    """
-        pass
+            когда из буфера была убрана программа"""
+        if len(self.buffer) == 0:
+            self.statystics['P1'][1] = self.program_end
+            self.isworking = False
+        else:
+            self.isworking = False
+            program = self.buffer.pop()
+            program.buffer_exit = self.time
+            self.take_program(program)
+
+    def close_program(self):
+        """Программа выходит из системы после выполнения на сервере"""
+        self.programstart = 0
+        self.time = self.program_end
+        self.program_end = 0
+        self.throw_program(self.program)
+        self.program = 0
+
+    def throw_program(self, program):
+        """ Программа покидает вычислительную систему , неважно по какой причине"""
+        self.statystics['Tprog'] += program.cs_exit - program.cs_enter
+        self.statystics['Tbuf'] += program.buffer_exit - program.buffer_enter
+
 
 
     def its_showtime(self):
-        print(self.statystics)
+        """
+            приводит стаистику в нужный вид: высчитвает среднее значение, вероятности,
+             добавляет значок процента, округляет до 4 знаков после запятой, и так далее
+        """
+        self.statystics['Potk'] = round(self.statystics['Potk'] / self.statystics['Q'], 4)
+        self.statystics['P0'] = round(self.statystics['P0'][0] / 3600, 4)
+        self.statystics['P1'] = round(self.statystics['P1'][0] / 3600, 4)
+        self.statystics['P2'] = round(self.statystics['P2'][0] / 3600, 4)
+        self.statystics['P3'] = round(self.statystics['P3'][0] / 3600, 4)
+        self.statystics['Tbuf'] = round(self.statystics['Tbuf'], 4)
+        self.statystics['Tprog'] = round(self.statystics['Tprog'], 4)
+        self.statystics['Q'] = 1 - self.statystics['Potk']
+        self.statystics['S'] =self.statystics['Q'] * 2
+        pp(self.statystics)
 
-class Program():
+
+class Program:
     """программа , которая создается генератором и обрабатывается сервером имеет в себе характеристики:
     глобальное время появления, время, необходимое на исполнение время, появления в ВС( по идее время создания,
     программы приходят на сервер мгновенно, и время покидания сервера)"""
@@ -91,49 +141,51 @@ class Program():
     def __init__(self, appear_time, process_time):
         self.appear_time = appear_time
         self.process_time = process_time
+        self.cs_enter = self.appear_time
+        self.cs_exit = 0
         self.input_time = appear_time
         self.output_time = 0
+        self.buffer_enter = 0
+        self.buffer_exit = 0
 
-def generate_programm(lambd, delta_time):
+    # def __repr__(self):
+    #     return str(self.appear_time) + '\t' + str(self.process_time)
+
+
+def generate_program_expo(lambd, delta_time):
     """генерирует программу, состоящую из времени начала, времени обработки . ито и то генератор.
     оба времени генерируются экспоненциальным распределением. """
-    global time
-    time  = 0
+    # global time
+    time = 0
 
-    while time<3600:
+    while time < 3600:
         appear_time = expovariate(lambd)
-        #appear_time = (appear['Tzmax']-appear['Tzmin'])*appear_time + appear['Tzmin']
+        # appear_time = (appear['Tzmax']-appear['Tzmin'])*appear_time + appear['Tzmin']
         appear_time = time + appear_time
 
         time = appear_time
 
         process_time = expovariate(delta_time)
-        #process_time = ((process['Tzmax']-process['Tzmin'])*process_time + process['Tzmin'])
-        if appear_time>=3600: break
+        # process_time = ((process['Tzmax']-process['Tzmin'])*process_time + process['Tzmin'])
+        if appear_time >= 3600:
+            break
         yield Program(appear_time, process_time)
 
 
-def generate_programm_linear(appear, process):
+def generate_program_linear(appear, process):
     """генерирует программу, состоящую из времени начала, времени обработки . ито и то генератор.
     оба времени генерируются экспоненциальным распределением. """
+    # global time
     time = 0
 
-    while time<3600:
-        #appear_time = expovariate(lambd_a)
-        #appear_time = (appear['Tzmax']-appear['Tzmin'])*appear_time + appear['Tzmin']
+    while time < 3600:
+        # appear_time = expovariate(lambd_a)
+        # appear_time = (appear['Tzmax']-appear['Tzmin'])*appear_time + appear['Tzmin']
         appear_time = uniform(appear['Tzmin'], appear['Tzmax'])
         appear_time = time + appear_time
         time = appear_time
 
         process_time = uniform(process['Tzmin'], process['Tzmax'])
-        #process_time = ((process['Tzmax']-process['Tzmin'])*process_time + process['Tzmin'])
-        #if
+        # process_time = ((process['Tzmax']-process['Tzmin'])*process_time + process['Tzmin'])
+        # if
         yield Program(appear_time, process_time)
-
-
-
-# def generate_timings(server_instance, program):
-#     """создавать время начала и время окончания программы, вызывать take_program от каждого из времён"""
-#     server_instance.take_program(program[0])
-#     server_instance.statystics['Q']+=1
-#     server_instance.take_program(program[0]+program[1])
