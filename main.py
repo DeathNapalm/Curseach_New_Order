@@ -16,7 +16,7 @@ def main(gen_type):
     while True:
         try:
             rv = next(testing_subject)
-            # print(rv)
+            # print(rv.appear_time)
         except StopIteration:
             break
         testing_server.take_program(rv)
