@@ -1,6 +1,5 @@
 
-import server
-from fractions import Fraction as fr
+import cs
 def main():
     test_generator_expo()
 
@@ -11,8 +10,8 @@ def test_generator_expo():
 
     lambd = 2
     delta_time = 1/3
-    testing_subject = server.generate_programm(lambd, delta_time)
-    testing_server = server.Server()
+    testing_subject = cs.generate_programm(lambd, delta_time)
+    testing_server = cs.Server()
 
     while(True):
         #rv = testing_subject()
@@ -21,7 +20,7 @@ def test_generator_expo():
         except StopIteration :
             print('stop')
             break
-        server.generate_timings(testing_server, rv)
+        cs.generate_timings(testing_server, rv)
         print(*rv, sep='\t')
     testing_server.its_showtime()
 
@@ -29,7 +28,7 @@ def test_generator_expo():
 def test_generator_linear():
     appear = {'Tzmin' : 1/3, 'Tzmax' : 2/3}
     process = {'Tzmin' : 1, 'Tzmax' : 6}
-    testing_subject = server.generate_programm_linear(appear, process)
+    testing_subject = cs.generate_programm_linear(appear, process)
     while(True):
         #rv = testing_subject()
         try:
