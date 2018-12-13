@@ -25,4 +25,4 @@ def main(gen_type):
 
 
 if __name__ == '__main__':
-    main(1)
+    main(0)
