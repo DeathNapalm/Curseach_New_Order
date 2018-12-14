@@ -33,7 +33,7 @@ Tбуф – среднее время нахождения программы в
 from pprint import pprint as pp
 
 from random import expovariate, uniform
-
+# 1.53
 
 
 class Server:
