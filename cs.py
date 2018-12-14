@@ -41,6 +41,8 @@ class Server:
     , в котором отображены все события связанные с исполнением этих программ"""
     def __init__(self):
         self.programm_number = 0
+        self.finished_programs = 0
+        self.buffered_programs = 0
         self.server_time = 0
         self.buffer_time = 0
         self.isworking = False
@@ -68,82 +70,129 @@ class Server:
             program.cs_enter = program.appear_time
             self.buffer_time = program.appear_time
             self.program_end = program.appear_time + program.process_time
+            self.program = program
+            self.programm_number += 1
 
-        self.programm_number += 1
-
-        # if self.isworking:
-        #     if program.appear_time >= self.program_end:
-        #         self.program.cs_exit = self.program_end
-        #         self.close_program()
-        #         self.isworking = False
-        #         if len(self.buffer):
-        #             self.debuffer_program()
-        #         else:
-        #             # простой сервера
-        #             pass
-        #     self.buffer_program(program)
-        # else:
-        #
-        #     self.isworking = True
-        #     self.program = program
-        #     self.programstart = program.appear_time
-        #     self.program_end = program.appear_time + program.process_time
-        #     # self.log.append((time,))
-
-        if program.appear_time < self.program_end:
-            self.server_time = program.appear_time
-            self.buffer_program(program)
         else:
-            self.decide(program)
+            self.programm_number += 1
+            self.program = program
+
+            # if self.isworking:
+            #     if program.appear_time >= self.program_end:
+            #         self.program.cs_exit = self.program_end
+            #         self.close_program()
+            #         self.isworking = False
+            #         if len(self.buffer):
+            #             self.debuffer_program()
+            #         else:
+            #             # простой сервера
+            #             pass
+            #     self.buffer_program(program)
+            # else:
+            #
+            #     self.isworking = True
+            #     self.program = program
+            #     self.programstart = program.appear_time
+            #     self.program_end = program.appear_time + program.process_time
+            #     # self.log.append((time,))
+
+            if program.appear_time < self.program_end:
+                self.server_time = program.appear_time
+                self.buffer_program(program)
+            else:
+                self.program = program
+                self.decide()
             
-    def decide(self, program):
-        pass
+    def decide(self):
+        self.finished_programs += 1
+        if len(self.buffer):
+            debuffered_program = self.debuffer_program()
+            self.program_end = debuffered_program.process_time + self.program_end
+            if self.program.appear_time >= self.program_end:
+                self.decide()
+            else:
+                self.server_time = self.program.appear_time + self.program.process_time
+                self.buffer_program(self.program)
+                self.program = debuffered_program
+                #program = debuffered_program
+        else:
+            if self.program.appear_time > self.program_end:
+                self.statystics['P0'][0]+=self.program.appear_time - self.program_end
+                self.server_time = self.program.appear_time
+                self.program_end = self.server_time + self.program.process_time
+            elif self.program.appear_time == self.program_end:
+                self.server_time = self.program_end
+                self.program_end = self.program.appear_time
 
     def buffer_program(self,  program):
         """Кладет программу в буффер, если буффер переполнен, программа выбрасывается"""
-        if len(self.buffer) >= 3:
-            self.statystics['Potk'] += 1
-            program.cs_exit = program.appear_time
-            self.throw_program(program)
-        else:
-            if not len(self.buffer):
-                if not self.statystics['P{}'.format(len(self.buffer) + 1)][1]:
-                    self.statystics['P{}'.format(len(self.buffer) + 1)][0] = program.appear_time - self.statystics[
-                        'P{}'.format(len(self.buffer) + 1)][1]
-                else:
-                    self.statystics['P{}'.format(len(self.buffer) + 1)][1] = program.appear_time
-
+        # if len(self.buffer) >= 3:
+        #     self.statystics['Potk'] += 1
+        #     program.cs_exit = program.appear_time
+        #     self.throw_program(program)
+        # else:
+        #     if not len(self.buffer):
+        #         if not self.statystics['P{}'.format(len(self.buffer) + 1)][1]:
+        #             self.statystics['P{}'.format(len(self.buffer) + 1)][0] = program.appear_time - self.statystics[
+        #                 'P{}'.format(len(self.buffer) + 1)][1]
+        #         else:
+        #             self.statystics['P{}'.format(len(self.buffer) + 1)][1] = program.appear_time
+        #
+        #     self.buffer.append(program)
+        #     program.buffer_enter = program.appear_time
+        #     if not self.statystics['P{}'.format(len(self.buffer)+1)][1]:
+        #         self.statystics['P{}'.format(len(self.buffer) + 1)][0] = program.appear_time - self.statystics[
+        #             'P{}'.format(len(self.buffer) + 1)][1]
+        #     else:
+        #         self.statystics['P{}'.format(len(self.buffer)+1)][1] = program.appear_time
+        self.buffered_programs +=1
+        if len(self.buffer) == 0:
             self.buffer.append(program)
-            program.buffer_enter = program.appear_time
-            if not self.statystics['P{}'.format(len(self.buffer)+1)][1]:
-                self.statystics['P{}'.format(len(self.buffer) + 1)][0] = program.appear_time - self.statystics[
-                    'P{}'.format(len(self.buffer) + 1)][1]
-            else:
-                self.statystics['P{}'.format(len(self.buffer)+1)][1] = program.appear_time
+            self.statystics['P1'][0] +=(self.server_time - self.buffer_time)
+        elif len(self.buffer) == 1:
+            self.buffer.append(program)
+            self.statystics['P2'][0] +=(self.server_time - self.buffer_time)
+        elif len(self.buffer) == 2:
+            self.buffer.append(program)
+            self.statystics['P3'][0] +=(self.server_time - self.buffer_time)
+        elif len(self.buffer) == 3:
+            self.statystics['P4'][0] +=(self.server_time - self.buffer_time)
+            self.statystics['Potk'] +=1
+        self.buffer_time = self.server_time
 
     def debuffer_program(self):
         """Убирает программу из буфера, уменьшает буфер на 1 записывает в статистику
             когда из буфера была убрана программа"""
-        if len(self.buffer) == 0:
-            #self.statystics['P1'][1] = self.program_end
-            self.isworking = False
-        else:
-            # if not len(self.buffer) ==3:
-            #     if not self.statystics['P{}'.format(len(self.buffer) + 1)][1]:
-            #         self.statystics['P{}'.format(len(self.buffer) + 1)][0] = self.program_end - self.statystics[
-            #             'P{}'.format(len(self.buffer) + 1)][1]
-            #     else:
-            #         self.statystics['P{}'.format(len(self.buffer) + 1)][1] = self.program_end
-            self.isworking = False
-            program = self.buffer.pop()
-            program.buffer_exit = self.server_time
-            self.take_program(program)
-
-            if not self.statystics['P{}'.format(len(self.buffer) + 1)][1]:
-                self.statystics['P{}'.format(len(self.buffer) + 1)][0] = program.appear_time - self.statystics[
-                    'P{}'.format(len(self.buffer) + 1)][1]
-            else:
-                self.statystics['P{}'.format(len(self.buffer) + 1)][1] = program.appear_time
+        # if len(self.buffer) == 0:
+        #     #self.statystics['P1'][1] = self.program_end
+        #     self.isworking = False
+        # else:
+        #     # if not len(self.buffer) ==3:
+        #     #     if not self.statystics['P{}'.format(len(self.buffer) + 1)][1]:
+        #     #         self.statystics['P{}'.format(len(self.buffer) + 1)][0] = self.program_end - self.statystics[
+        #     #             'P{}'.format(len(self.buffer) + 1)][1]
+        #     #     else:
+        #     #         self.statystics['P{}'.format(len(self.buffer) + 1)][1] = self.program_end
+        #     self.isworking = False
+        #     program = self.buffer.pop()
+        #     program.buffer_exit = self.server_time
+        #     self.take_program(program)
+        #
+        #     if not self.statystics['P{}'.format(len(self.buffer) + 1)][1]:
+        #         self.statystics['P{}'.format(len(self.buffer) + 1)][0] = program.appear_time - self.statystics[
+        #             'P{}'.format(len(self.buffer) + 1)][1]
+        #     else:
+        #         self.statystics['P{}'.format(len(self.buffer) + 1)][1] = program.appear_time
+        # return(program)
+        if len(self.buffer) == 1:
+            self.statystics['P2'][0] +=(self.program_end - self.buffer_time)
+        if len(self.buffer) == 2:
+            self.statystics['P3'][0] +=(self.program_end - self.buffer_time)
+        if len(self.buffer) == 3:
+            self.statystics['P4'][0] +=(self.program_end - self.buffer_time)
+        self.buffer_time = self.program_end
+        program = self.buffer.pop()
+        return program
 
     def close_program(self):
         """Выводит программу из исполнения на сервере"""
