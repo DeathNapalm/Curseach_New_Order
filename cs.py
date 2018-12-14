@@ -67,27 +67,37 @@ class Server:
             self.server_time = program.appear_time
             program.cs_enter = program.appear_time
             self.buffer_time = program.appear_time
+            self.program_end = program.appear_time + program.process_time
 
         self.programm_number += 1
 
-        if self.isworking:
-            if program.appear_time >= self.program_end:
-                self.program.cs_exit = self.program_end
-                self.close_program()
-                self.isworking = False
-                if len(self.buffer):
-                    self.debuffer_program()
-                else:
-                    # простой сервера
-                    pass
+        # if self.isworking:
+        #     if program.appear_time >= self.program_end:
+        #         self.program.cs_exit = self.program_end
+        #         self.close_program()
+        #         self.isworking = False
+        #         if len(self.buffer):
+        #             self.debuffer_program()
+        #         else:
+        #             # простой сервера
+        #             pass
+        #     self.buffer_program(program)
+        # else:
+        #
+        #     self.isworking = True
+        #     self.program = program
+        #     self.programstart = program.appear_time
+        #     self.program_end = program.appear_time + program.process_time
+        #     # self.log.append((time,))
+
+        if program.appear_time < self.program_end:
+            self.server_time = program.appear_time
             self.buffer_program(program)
         else:
-
-            self.isworking = True
-            self.program = program
-            self.programstart = program.appear_time
-            self.program_end = program.appear_time + program.process_time
-            # self.log.append((time,))
+            self.decide(program)
+            
+    def decide(self, program):
+        pass
 
     def buffer_program(self,  program):
         """Кладет программу в буффер, если буффер переполнен, программа выбрасывается"""
