@@ -33,8 +33,7 @@ Tбуф – среднее время нахождения программы в
 from pprint import pprint as pp
 
 from random import expovariate, uniform
-import decimal
-decimal.getcontext().prec = 4
+
 
 
 class Server:
@@ -43,6 +42,7 @@ class Server:
     def __init__(self):
         self.programm_number = 0
         self.server_time = 0
+        self.buffer_time = 0
         self.isworking = False
         self.buffer = []
         self.programstart = 0
@@ -53,7 +53,7 @@ class Server:
                            'Nprog': 0, 'Tprog': 0,
                            'Nbuf': 0, 'Tbuf': 0}
 
-    def take_program(self, program_itself):
+    def take_program(self, program):
         """
         принимает время через которое приходит следующая программа и  решает что с ней делать
         если буфер пустой и сервер не работает, то отмечает начало и конец исполнения Программы
@@ -63,12 +63,15 @@ class Server:
 
         # сервер простаивает до появления нулевой программы
         if not self.programm_number:
-            self.statystics['P0'][0] = program_itself.appear_time
-            program_itself.cs_enter = program_itself.appear_time
+            self.statystics['P0'][0] = program.appear_time
+            self.server_time = program.appear_time
+            program.cs_enter = program.appear_time
+            self.buffer_time = program.appear_time
 
         self.programm_number += 1
+
         if self.isworking:
-            if program_itself.appear_time >= self.program_end:
+            if program.appear_time >= self.program_end:
                 self.program.cs_exit = self.program_end
                 self.close_program()
                 self.isworking = False
@@ -77,13 +80,13 @@ class Server:
                 else:
                     # простой сервера
                     pass
-            self.buffer_program(program_itself)
+            self.buffer_program(program)
         else:
-            self.statystics['P1'][0] += program_itself.appear_time - self.statystics['P0'][1]
+
             self.isworking = True
-            self.program = program_itself
-            self.programstart = program_itself.appear_time
-            self.program_end = program_itself.appear_time + program_itself.process_time
+            self.program = program
+            self.programstart = program.appear_time
+            self.program_end = program.appear_time + program.process_time
             # self.log.append((time,))
 
     def buffer_program(self,  program):
@@ -150,8 +153,8 @@ class Server:
             приводит стаистику в нужный вид: высчитвает среднее значение, вероятности,
              добавляет значок процента, округляет до 4 знаков после запятой, и так далее
         """
-        self.statystics['Potk'] = decimal.Decimal(self.statystics['Potk'] / self.programm_number)
-        self.statystics['P0'] = decimal.Decimal(self.statystics['P0'][0] / 3600)
+        self.statystics['Potk'] = round((self.statystics['Potk'] + len(self.buffer))/ self.programm_number, 4)
+        self.statystics['P0'] = round(self.statystics['P0'][0] / 3600, 4)
         self.statystics['P1'] = round(self.statystics['P1'][0] / 3600, 4)
         self.statystics['P2'] = round(self.statystics['P2'][0] / 3600, 4)
         self.statystics['P3'] = round(self.statystics['P3'][0] / 3600, 4)

@@ -8,14 +8,14 @@ def main(gen_type):
     delta_time = 1 / 3
 
     if gen_type:
-        testing_subject = cs.generate_program_expo(lambd, delta_time)
+        testing_generator = cs.generate_program_expo(lambd, delta_time)
     else:
-        testing_subject = cs.generate_program_linear(appear, process)
+        testing_generator = cs.generate_program_linear(appear, process)
     testing_server = cs.Server()
 
     while True:
         try:
-            rv = next(testing_subject)
+            rv = next(testing_generator)
             # print(rv.appear_time)
         except StopIteration:
             break
