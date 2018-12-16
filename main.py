@@ -5,7 +5,7 @@ def main(gen_type):
     appear = {'Tzmin': 1 / 3, 'Tzmax': 2 / 3}
     process = {'Tzmin': 1, 'Tzmax': 6}
     lambd = 2
-    delta_time = 1/3
+    delta_time = 1 / 3
 
     if gen_type:
         testing_generator = cs.generate_program_expo(lambd, delta_time)
@@ -21,8 +21,8 @@ def main(gen_type):
             break
         testing_server.take_program(rv)
 
-    testing_server.its_showtime()
+    return testing_server.its_showtime()
 
 
 if __name__ == '__main__':
-    main(0)
+    main(1)

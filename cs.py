@@ -111,7 +111,7 @@ class Server:
             if self.program.appear_time >= self.program_end:
                 self.decide()
             else:
-                self.server_time = self.program.appear_time + self.program.process_time
+                self.server_time = self.program.appear_time  # + self.program.process_time
                 self.buffer_program(self.program)
                 self.program = debuffered_program
                 # program = debuffered_program
@@ -186,9 +186,9 @@ class Server:
         # return(program)
         if len(self.buffer) == 1:
             self.statistics['P2'][0] += (self.program_end - self.buffer_time)
-        if len(self.buffer) == 2:
+        elif len(self.buffer) == 2:
             self.statistics['P3'][0] += (self.program_end - self.buffer_time)
-        if len(self.buffer) == 3:
+        elif len(self.buffer) == 3:
             self.statistics['P4'][0] += (self.program_end - self.buffer_time)
         self.buffer_time = self.program_end
         program = self.buffer.pop()
@@ -215,25 +215,28 @@ class Server:
 
         self.statistics['Tbuf'] = round((self.statistics['P2'][0] * 1
                                          + self.statistics['P3'][0] * 2
-                                         + self.statistics['P4'][0] * 3) / self.buffered_programs, 4)
+                                         + self.statistics['P4'][0] * 3) / self.buffered_programs, 5)
 
         self.statistics['Tprog'] = round((self.statistics['Tbuf'] + (self.server_time - self.statistics['P0'][0]) /
-                                          (self.programm_number - self.statistics['Potk'])), 4)
+                                          (self.programm_number - self.statistics['Potk'])), 5)
 
         self.statistics['P1'] = round((self.server_time -
                                        (self.statistics['P0'][0] + self.statistics['P2'][0]
-                                        + self.statistics['P3'][0] + self.statistics['P4'][0])) / 3600, 4)
+                                        + self.statistics['P3'][0] + self.statistics['P4'][0])) / 3600, 5)
 
-        self.statistics['Potk'] = round((self.statistics['Potk'] + len(self.buffer)) / self.programm_number, 4)
+        self.statistics['Q'] = round((self.programm_number - (self.statistics['Potk'] +
+                                                              len(self.buffer))) / self.programm_number, 5)
+
+        self.statistics['Potk'] = round((self.statistics['Potk'] + len(self.buffer)) / self.programm_number, 5)
 
         self.statistics['P0'] = round(self.statistics['P0'][0] / 3600, 5)
         # self.statistics['P1'] = round(self.statistics['P1'][0] / 3600, 4)
         # self.statistics['P1'] = round(
         #     self.server_time - (self.statistics['']) )
 
-        self.statistics['P2'] = round(self.statistics['P2'][0] / 3600, 4)
-        self.statistics['P3'] = round(self.statistics['P3'][0] / 3600, 4)
-        self.statistics['P4'] = round(self.statistics['P4'][0] / 3600, 4)
+        self.statistics['P2'] = round(self.statistics['P2'][0] / 3600, 5)
+        self.statistics['P3'] = round(self.statistics['P3'][0] / 3600, 5)
+        self.statistics['P4'] = round(self.statistics['P4'][0] / 3600, 5)
 
         self.statistics['Nprog'] = round((self.statistics['P0'] * 0
                                           + self.statistics['P1'] * 1
@@ -244,28 +247,28 @@ class Server:
                                           + self.statistics['P1']
                                           + self.statistics['P2']
                                           + self.statistics['P3']
-                                          + self.statistics['P4']), 4)
+                                          + self.statistics['P4']), 5)
 
         self.statistics['Nbuf'] = round((self.statistics['P2'] * 1
                                          + self.statistics['P3'] * 2
                                          + self.statistics['P4'] * 3) /
                                         (self.statistics['P2']
                                          + self.statistics['P3']
-                                         + self.statistics['P4']), 4)
+                                         + self.statistics['P4']), 5)
 
         # self.statistics['Tbuf'] = round(self.statistics['Tbuf'], 4)
         # self.statistics['Tprog'] = round(self.statistics['Tprog'], 4)
 
-        self.statistics['Q'] = (self.programm_number - (self.statistics['Potk'] +
-                                                        len(self.buffer))) / self.programm_number
         # self.statistics['S'] = self.statistics['Q'] * 2
         # self.statistics['S'] = self.finished_programs / self.server_time
-        self.statistics['S'] = self.finished_programs / self.server_time
+        self.statistics['S'] = round(self.finished_programs / self.server_time, 5)
 
-        #self.statistics['Nbuf'] = 1-self.statistics['Potk']
+        # self.statistics['Nbuf'] = 1-self.statistics['Potk']
         # self.statistics['Nprog'] = self.statistics['Tprog'] * 2
 
-        pp(self.statistics)
+        #pp(self.statistics)
+
+        return self.statistics
 
 
 class Program:
