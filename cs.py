@@ -50,7 +50,7 @@ class Server:
         self.programstart = 0
         self.program_end = 0
         self.program = None
-        self.statystics = {'P0': [0, 0], 'P1': [0, 0], 'P2': [0, 0], 'P3': [0, 0], 'P4': [0, 0], 'Potk': 0,
+        self.statistics = {'P0': [0, 0], 'P1': [0, 0], 'P2': [0, 0], 'P3': [0, 0], 'P4': [0, 0], 'Potk': 0,
                            'Q': 0,  'S': 0,
                            'Nprog': 0, 'Tprog': 0,
                            'Nbuf': 0, 'Tbuf': 0}
@@ -65,7 +65,7 @@ class Server:
 
         # сервер простаивает до появления нулевой программы
         if not self.programm_number:
-            self.statystics['P0'][0] = program.appear_time
+            self.statistics['P0'][0] = program.appear_time
             self.server_time = program.appear_time
             program.cs_enter = program.appear_time
             self.buffer_time = program.appear_time
@@ -114,10 +114,10 @@ class Server:
                 self.server_time = self.program.appear_time + self.program.process_time
                 self.buffer_program(self.program)
                 self.program = debuffered_program
-                #program = debuffered_program
+                # program = debuffered_program
         else:
             if self.program.appear_time > self.program_end:
-                self.statystics['P0'][0]+=self.program.appear_time - self.program_end
+                self.statistics['P0'][0] += self.program.appear_time - self.program_end
                 self.server_time = self.program.appear_time
                 self.program_end = self.server_time + self.program.process_time
             elif self.program.appear_time == self.program_end:
@@ -127,69 +127,69 @@ class Server:
     def buffer_program(self,  program):
         """Кладет программу в буффер, если буффер переполнен, программа выбрасывается"""
         # if len(self.buffer) >= 3:
-        #     self.statystics['Potk'] += 1
+        #     self.statistics['Potk'] += 1
         #     program.cs_exit = program.appear_time
         #     self.throw_program(program)
         # else:
         #     if not len(self.buffer):
-        #         if not self.statystics['P{}'.format(len(self.buffer) + 1)][1]:
-        #             self.statystics['P{}'.format(len(self.buffer) + 1)][0] = program.appear_time - self.statystics[
+        #         if not self.statistics['P{}'.format(len(self.buffer) + 1)][1]:
+        #             self.statistics['P{}'.format(len(self.buffer) + 1)][0] = program.appear_time - self.statistics[
         #                 'P{}'.format(len(self.buffer) + 1)][1]
         #         else:
-        #             self.statystics['P{}'.format(len(self.buffer) + 1)][1] = program.appear_time
+        #             self.statistics['P{}'.format(len(self.buffer) + 1)][1] = program.appear_time
         #
         #     self.buffer.append(program)
         #     program.buffer_enter = program.appear_time
-        #     if not self.statystics['P{}'.format(len(self.buffer)+1)][1]:
-        #         self.statystics['P{}'.format(len(self.buffer) + 1)][0] = program.appear_time - self.statystics[
+        #     if not self.statistics['P{}'.format(len(self.buffer)+1)][1]:
+        #         self.statistics['P{}'.format(len(self.buffer) + 1)][0] = program.appear_time - self.statistics[
         #             'P{}'.format(len(self.buffer) + 1)][1]
         #     else:
-        #         self.statystics['P{}'.format(len(self.buffer)+1)][1] = program.appear_time
-        self.buffered_programs +=1
+        #         self.statistics['P{}'.format(len(self.buffer)+1)][1] = program.appear_time
+        self.buffered_programs += 1
         if len(self.buffer) == 0:
             self.buffer.append(program)
-            self.statystics['P1'][0] +=(self.server_time - self.buffer_time)
+            self.statistics['P1'][0] += (self.server_time - self.buffer_time)
         elif len(self.buffer) == 1:
             self.buffer.append(program)
-            self.statystics['P2'][0] +=(self.server_time - self.buffer_time)
+            self.statistics['P2'][0] += (self.server_time - self.buffer_time)
         elif len(self.buffer) == 2:
             self.buffer.append(program)
-            self.statystics['P3'][0] +=(self.server_time - self.buffer_time)
+            self.statistics['P3'][0] += (self.server_time - self.buffer_time)
         elif len(self.buffer) == 3:
-            self.statystics['P4'][0] +=(self.server_time - self.buffer_time)
-            self.statystics['Potk'] +=1
+            self.statistics['P4'][0] += (self.server_time - self.buffer_time)
+            self.statistics['Potk'] += 1
         self.buffer_time = self.server_time
 
     def debuffer_program(self):
         """Убирает программу из буфера, уменьшает буфер на 1 записывает в статистику
             когда из буфера была убрана программа"""
         # if len(self.buffer) == 0:
-        #     #self.statystics['P1'][1] = self.program_end
+        #     #self.statistics['P1'][1] = self.program_end
         #     self.isworking = False
         # else:
         #     # if not len(self.buffer) ==3:
-        #     #     if not self.statystics['P{}'.format(len(self.buffer) + 1)][1]:
-        #     #         self.statystics['P{}'.format(len(self.buffer) + 1)][0] = self.program_end - self.statystics[
+        #     #     if not self.statistics['P{}'.format(len(self.buffer) + 1)][1]:
+        #     #         self.statistics['P{}'.format(len(self.buffer) + 1)][0] = self.program_end - self.statistics[
         #     #             'P{}'.format(len(self.buffer) + 1)][1]
         #     #     else:
-        #     #         self.statystics['P{}'.format(len(self.buffer) + 1)][1] = self.program_end
+        #     #         self.statistics['P{}'.format(len(self.buffer) + 1)][1] = self.program_end
         #     self.isworking = False
         #     program = self.buffer.pop()
         #     program.buffer_exit = self.server_time
         #     self.take_program(program)
         #
-        #     if not self.statystics['P{}'.format(len(self.buffer) + 1)][1]:
-        #         self.statystics['P{}'.format(len(self.buffer) + 1)][0] = program.appear_time - self.statystics[
+        #     if not self.statistics['P{}'.format(len(self.buffer) + 1)][1]:
+        #         self.statistics['P{}'.format(len(self.buffer) + 1)][0] = program.appear_time - self.statistics[
         #             'P{}'.format(len(self.buffer) + 1)][1]
         #     else:
-        #         self.statystics['P{}'.format(len(self.buffer) + 1)][1] = program.appear_time
+        #         self.statistics['P{}'.format(len(self.buffer) + 1)][1] = program.appear_time
         # return(program)
         if len(self.buffer) == 1:
-            self.statystics['P2'][0] +=(self.program_end - self.buffer_time)
+            self.statistics['P2'][0] += (self.program_end - self.buffer_time)
         if len(self.buffer) == 2:
-            self.statystics['P3'][0] +=(self.program_end - self.buffer_time)
+            self.statistics['P3'][0] += (self.program_end - self.buffer_time)
         if len(self.buffer) == 3:
-            self.statystics['P4'][0] +=(self.program_end - self.buffer_time)
+            self.statistics['P4'][0] += (self.program_end - self.buffer_time)
         self.buffer_time = self.program_end
         program = self.buffer.pop()
         return program
@@ -204,28 +204,68 @@ class Server:
 
     def throw_program(self, program):
         """ Программа покидает вычислительную систему , неважно по какой причине"""
-        self.statystics['Tprog'] += program.cs_exit - program.cs_enter
-        self.statystics['Tbuf'] += program.buffer_exit - program.buffer_enter
+        self.statistics['Tprog'] += program.cs_exit - program.cs_enter
+        self.statistics['Tbuf'] += program.buffer_exit - program.buffer_enter
 
     def its_showtime(self):
         """
             приводит стаистику в нужный вид: высчитвает среднее значение, вероятности,
              добавляет значок процента, округляет до 4 знаков после запятой, и так далее
         """
-        self.statystics['Potk'] = round((self.statystics['Potk'] + len(self.buffer))/ self.programm_number, 4)
-        self.statystics['P0'] = round(self.statystics['P0'][0] / 3600, 4)
-        self.statystics['P1'] = round(self.statystics['P1'][0] / 3600, 4)
-        self.statystics['P2'] = round(self.statystics['P2'][0] / 3600, 4)
-        self.statystics['P3'] = round(self.statystics['P3'][0] / 3600, 4)
-        self.statystics['P4'] = round(self.statystics['P4'][0] / 3600, 4)
-        self.statystics['Tbuf'] = round(self.statystics['Tbuf'], 4)
-        self.statystics['Tprog'] = round(self.statystics['Tprog'], 4)
-        self.statystics['Q'] = 1 - self.statystics['Potk']
-        self.statystics['S'] = self.statystics['Q'] * 2
-        self.statystics['Nbuf'] = 1-self.statystics['Potk']
-        self.statystics['Nprog'] = self.statystics['Tprog'] * 2
 
-        pp(self.statystics)
+        self.statistics['Tbuf'] = round((self.statistics['P2'][0] * 1
+                                         + self.statistics['P3'][0] * 2
+                                         + self.statistics['P4'][0] * 3) / self.buffered_programs, 4)
+
+        self.statistics['Tprog'] = round((self.statistics['Tbuf'] + (self.server_time - self.statistics['P0'][0]) /
+                                          (self.programm_number - self.statistics['Potk'])), 4)
+
+        self.statistics['P1'] = round((self.server_time -
+                                       (self.statistics['P0'][0] + self.statistics['P2'][0]
+                                        + self.statistics['P3'][0] + self.statistics['P4'][0])) / 3600, 4)
+
+        self.statistics['Potk'] = round((self.statistics['Potk'] + len(self.buffer)) / self.programm_number, 4)
+
+        self.statistics['P0'] = round(self.statistics['P0'][0] / 3600, 5)
+        # self.statistics['P1'] = round(self.statistics['P1'][0] / 3600, 4)
+        # self.statistics['P1'] = round(
+        #     self.server_time - (self.statistics['']) )
+
+        self.statistics['P2'] = round(self.statistics['P2'][0] / 3600, 4)
+        self.statistics['P3'] = round(self.statistics['P3'][0] / 3600, 4)
+        self.statistics['P4'] = round(self.statistics['P4'][0] / 3600, 4)
+
+        self.statistics['Nprog'] = round((self.statistics['P0'] * 0
+                                          + self.statistics['P1'] * 1
+                                          + self.statistics['P2'] * 2
+                                          + self.statistics['P3'] * 3
+                                          + self.statistics['P4'] * 4) /
+                                         (self.statistics['P0']
+                                          + self.statistics['P1']
+                                          + self.statistics['P2']
+                                          + self.statistics['P3']
+                                          + self.statistics['P4']), 4)
+
+        self.statistics['Nbuf'] = round((self.statistics['P2'] * 1
+                                         + self.statistics['P3'] * 2
+                                         + self.statistics['P4'] * 3) /
+                                        (self.statistics['P2']
+                                         + self.statistics['P3']
+                                         + self.statistics['P4']), 4)
+
+        # self.statistics['Tbuf'] = round(self.statistics['Tbuf'], 4)
+        # self.statistics['Tprog'] = round(self.statistics['Tprog'], 4)
+
+        self.statistics['Q'] = (self.programm_number - (self.statistics['Potk'] +
+                                                        len(self.buffer))) / self.programm_number
+        # self.statistics['S'] = self.statistics['Q'] * 2
+        # self.statistics['S'] = self.finished_programs / self.server_time
+        self.statistics['S'] = self.finished_programs / self.server_time
+
+        #self.statistics['Nbuf'] = 1-self.statistics['Potk']
+        # self.statistics['Nprog'] = self.statistics['Tprog'] * 2
+
+        pp(self.statistics)
 
 
 class Program:
