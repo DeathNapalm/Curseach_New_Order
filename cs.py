@@ -33,6 +33,7 @@ Tбуф – среднее время нахождения программы в
 from pprint import pprint as pp
 
 from random import expovariate, uniform
+from collections import OrderedDict
 # 1.53
 
 
@@ -237,7 +238,8 @@ class Server:
         self.statistics['P2'] = round(self.statistics['P2'][0] / 3600, 5)
         self.statistics['P3'] = round(self.statistics['P3'][0] / 3600, 5)
         self.statistics['P4'] = round(self.statistics['P4'][0] / 3600, 5)
-
+        self.statistics['Potk'] = self.statistics['P4']
+        # self.statistics['Potk'] = self.statistics['Potk']tk'] = self.statistics['P1']/(+2+3+4
         self.statistics['Nprog'] = round((self.statistics['P0'] * 0
                                           + self.statistics['P1'] * 1
                                           + self.statistics['P2'] * 2
